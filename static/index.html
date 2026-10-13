@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PayLedger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#EDEFF8;--ink:#16143A;--muted:#66658A;--brand:#4A3FE4;--brand-d:#3A30C4;--line:#DADCF0;--in:#0B7A58;--out:#B8324F}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Bricolage Grotesque",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+[hidden]{display:none!important}
+button,input{font:inherit}
+h1,h2,p{margin:0}
+.logo{font-weight:800;font-size:1.2rem;letter-spacing:-.02em}
+:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+
+/* auth */
+.auth{min-height:100vh;display:grid;grid-template-columns:1.1fr 1fr}
+.hero{background:var(--brand);color:#fff;padding:3rem;display:flex;flex-direction:column;justify-content:space-between;gap:3rem}
+.hero h1{font-size:clamp(2.2rem,4.6vw,3.6rem);line-height:1.04;letter-spacing:-.035em;font-weight:800;max-width:13ch}
+.hero p{max-width:34ch;color:#DAD7FF;font-size:1.05rem;margin-top:1rem}
+.authwrap{display:grid;place-items:center;padding:2rem 1.25rem}
+.authcard{width:100%;max-width:380px;display:grid;gap:1rem}
+.authcard h2{font-size:1.6rem;letter-spacing:-.02em;font-weight:800}
+
+/* shared controls */
+.tabs{display:flex;background:#E3E5F6;border-radius:12px;padding:4px;gap:4px}
+.tabs button{flex:1;border:0;background:transparent;padding:.55rem;border-radius:9px;color:var(--muted);font-weight:600;cursor:pointer}
+.tabs button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(22,20,58,.12)}
+form{display:grid;gap:.9rem}
+label{display:grid;gap:.35rem;font-weight:600;font-size:.9rem}
+input{height:48px;padding:0 .9rem;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);width:100%}
+input:focus{outline:0;border-color:var(--brand);box-shadow:0 0 0 4px rgba(74,63,228,.16)}
+.money{position:relative}.money span{position:absolute;left:.9rem;top:50%;transform:translateY(-50%);color:var(--muted);font-weight:600}
+.money input{padding-left:1.8rem}
+.primary{height:50px;border:0;border-radius:12px;background:var(--brand);color:#fff;font-weight:700;cursor:pointer;transition:background .15s}
+.primary:hover{background:var(--brand-d)}.primary:disabled{opacity:.6;cursor:wait}
+.err{color:var(--out);font-size:.9rem;min-height:1.3em}
+.chips{display:flex;gap:.5rem}
+.chips button{flex:1;height:36px;border:1.5px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);font-weight:600;cursor:pointer}
+.chips button:hover{border-color:var(--brand);color:var(--brand)}
+.ghost{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:.35rem .8rem;font-weight:600;cursor:pointer;color:var(--ink)}
+
+/* app */
+.shell{max-width:1000px;margin:0 auto;padding:1rem 1.25rem 3rem}
+.top{display:flex;justify-content:space-between;align-items:center;padding:.75rem 0 1.25rem;gap:1rem}
+.top div{display:flex;align-items:center;gap:.75rem;min-width:0}
+#who{color:var(--muted);font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.grid{display:grid;grid-template-columns:420px 1fr;gap:1.25rem;align-items:start}
+.left{display:grid;gap:1.25rem}
+.wallet{background:var(--brand);color:#fff;border-radius:24px;padding:1.75rem}
+.wallet p{color:#DAD7FF;font-weight:600}
+.bal{font-size:clamp(2.8rem,9vw,3.8rem);font-weight:800;letter-spacing:-.04em;line-height:1.1;margin-top:.4rem;font-variant-numeric:tabular-nums}
+.bal small{font-size:.5em;opacity:.7;font-weight:600;letter-spacing:0}
+.panel{background:#fff;border:1px solid var(--line);border-radius:20px;padding:1.25rem;display:grid;gap:1rem}
+.panel h2{font-size:1.15rem;font-weight:800;letter-spacing:-.01em}
+ul{list-style:none;margin:0;padding:0}
+li{display:grid;grid-template-columns:42px 1fr auto;gap:.8rem;align-items:center;padding:.8rem 0;border-top:1px solid var(--line)}
+li:first-child{border-top:0}
+.av{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-weight:800}
+.t{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.d{color:var(--muted);font-size:.85rem}
+.amt{font-weight:800;font-variant-numeric:tabular-nums}.amt.in{color:var(--in)}.amt.out{color:var(--out)}
+.empty{color:var(--muted);padding:1.5rem 0;text-align:center}
+#toast{position:fixed;left:50%;bottom:1.5rem;transform:translate(-50%,150%);background:var(--ink);color:#fff;padding:.75rem 1.1rem;border-radius:12px;font-weight:600;transition:transform .25s;max-width:90vw}
+#toast.show{transform:translate(-50%,0)}
+
+@media(max-width:860px){.auth{grid-template-columns:1fr}.hero{padding:1.75rem;gap:1.5rem}.grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+
+<main id="auth" class="auth">
+  <section class="hero">
+    <span class="logo">PayLedger</span>
+    <div><h1>Send money with just an email.</h1><p>Add funds, pay anyone on PayLedger, and see every transaction in one place.</p></div>
+  </section>
+  <div class="authwrap"><div class="authcard">
+    <h2 id="authtitle">Welcome back</h2>
+    <div class="tabs"><button id="m-login" class="on" type="button">Log in</button><button id="m-reg" type="button">Create account</button></div>
+    <form id="authform">
+      <label>Email<input id="email" type="email" autocomplete="username" required></label>
+      <label>Password<input id="pw" type="password" minlength="8" autocomplete="current-password" placeholder="At least 8 characters" required></label>
+      <p class="err" id="autherr" role="alert"></p>
+      <button class="primary" id="authbtn">Log in</button>
+    </form>
+  </div></div>
+</main>
+
+<div id="app" class="shell" hidden>
+  <header class="top"><span class="logo">PayLedger</span><div><span id="who"></span><button class="ghost" id="logout">Log out</button></div></header>
+  <div class="grid">
+    <div class="left">
+      <section class="wallet"><p>Available balance</p><div class="bal" id="bal"></div></section>
+      <section class="panel">
+        <div class="tabs"><button id="t-dep" class="on" type="button">Add money</button><button id="t-send" type="button">Send money</button></div>
+        <form id="depform">
+          <label>Amount<div class="money"><span class="cur"></span><input id="dep" type="number" step="0.01" min="0.01" inputmode="decimal" placeholder="0.00" required></div></label>
+          <div class="chips"><button type="button" data-v="10"></button><button type="button" data-v="50"></button><button type="button" data-v="100"></button></div>
+          <p class="err" id="deperr" role="alert"></p>
+          <button class="primary" id="depbtn">Add money</button>
+        </form>
+        <form id="sendform" hidden>
+          <label>Recipient email<input id="to" type="email" placeholder="friend@example.com" required></label>
+          <label>Amount<div class="money"><span class="cur"></span><input id="amt" type="number" step="0.01" min="0.01" inputmode="decimal" placeholder="0.00" required></div></label>
+          <p class="err" id="senderr" role="alert"></p>
+          <button class="primary" id="sendbtn">Send money</button>
+        </form>
+      </section>
+    </div>
+    <section class="panel"><h2>Activity</h2><ul id="hist"></ul></section>
+  </div>
+</div>
+<div id="toast" role="status"></div>
+
+<script>
+const CUR = "$"; // change to "₹" if you prefer
+let token = sessionStorage.getItem("t"), me = null, shown = 0, busy = false, mode = "login";
+const $ = id => document.getElementById(id);
+const uid = () => crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random();
+const fmt = c => CUR + (c / 100).toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+document.querySelectorAll(".cur").forEach(e => e.textContent = CUR);
+document.querySelectorAll(".chips button").forEach(b => { b.textContent = CUR + b.dataset.v; b.onclick = () => { $("dep").value = b.dataset.v; $("dep").focus(); }; });
+
+async function api(path, method = "GET", body, key) {
+  const h = {"Content-Type": "application/json"};
+  if (token) h.Authorization = "Bearer " + token;
+  if (key) h["Idempotency-Key"] = key;
+  const r = await fetch("/api/" + path, {method, headers: h, body: body ? JSON.stringify(body) : undefined});
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(Array.isArray(d.detail) ? "Check your details: use a valid email, an amount above zero, and a password of 8+ characters." : d.detail || "Something went wrong. Try again.");
+  return d;
+}
+async function submit(btn, errEl, fn) {
+  if (busy) return;
+  busy = true; btn.disabled = true; errEl.textContent = "";
+  try { await fn(); } catch (e) { errEl.textContent = e.message; } finally { busy = false; btn.disabled = false; }
+}
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t.h); t.h = setTimeout(() => t.classList.remove("show"), 2800); }
+const cents = id => { const c = Math.round(parseFloat($(id).value) * 100); if (!(c > 0)) throw new Error("Enter an amount above zero."); return c; };
+
+function setMode(m) {
+  mode = m; $("m-login").classList.toggle("on", m === "login"); $("m-reg").classList.toggle("on", m === "register");
+  $("authtitle").textContent = m === "login" ? "Welcome back" : "Create your account";
+  $("authbtn").textContent = m === "login" ? "Log in" : "Create account";
+  $("pw").autocomplete = m === "login" ? "current-password" : "new-password"; $("autherr").textContent = "";
+}
+$("m-login").onclick = () => setMode("login"); $("m-reg").onclick = () => setMode("register");
+function setTab(t) {
+  $("t-dep").classList.toggle("on", t === "dep"); $("t-send").classList.toggle("on", t === "send");
+  $("depform").hidden = t !== "dep"; $("sendform").hidden = t !== "send";
+}
+$("t-dep").onclick = () => setTab("dep"); $("t-send").onclick = () => setTab("send");
+
+$("authform").onsubmit = e => { e.preventDefault(); submit($("authbtn"), $("autherr"), async () => {
+  const b = {email: $("email").value.trim(), password: $("pw").value};
+  if (mode === "register") await api("register", "POST", b);
+  token = (await api("login", "POST", b)).access_token; sessionStorage.setItem("t", token); await refresh();
+}); };
+$("depform").onsubmit = e => { e.preventDefault(); submit($("depbtn"), $("deperr"), async () => {
+  const c = cents("dep"); await api("deposit", "POST", {amount_cents: c}, uid());
+  $("dep").value = ""; toast("Added " + fmt(c)); await refresh();
+}); };
+$("sendform").onsubmit = e => { e.preventDefault(); submit($("sendbtn"), $("senderr"), async () => {
+  const c = cents("amt"), to = $("to").value.trim(); await api("transfer", "POST", {to_email: to, amount_cents: c}, uid());
+  $("amt").value = ""; $("to").value = ""; toast("Sent " + fmt(c) + " to " + to); await refresh();
+}); };
+$("logout").onclick = () => logout();
+function logout() { sessionStorage.removeItem("t"); token = null; me = null; shown = 0; $("pw").value = ""; $("app").hidden = true; $("auth").hidden = false; }
+
+function paint(v) { $("bal").innerHTML = ""; const cur = document.createElement("small"); cur.textContent = CUR;
+  const dec = document.createElement("small"); dec.textContent = "." + String(v % 100).padStart(2, "0");
+  $("bal").append(cur, Math.floor(v / 100).toLocaleString("en-US"), dec); }
+function setBal(c) {
+  const from = shown, start = performance.now(), dur = matchMedia("(prefers-reduced-motion:reduce)").matches ? 0 : 500; shown = c;
+  (function f(t) { const p = dur ? Math.min((t - start) / dur, 1) : 1; paint(Math.round(from + (c - from) * (1 - Math.pow(1 - p, 3)))); if (p < 1) requestAnimationFrame(f); })(start);
+}
+function when(s) { const d = new Date(/(Z|[+-]\d\d:?\d\d)$/i.test(s) ? s : s + "Z");
+  return d.toLocaleString("en-IN", {day: "numeric", month: "short", hour: "numeric", minute: "2-digit"}); }
+function render(txs) {
+  const ul = $("hist"); ul.innerHTML = "";
+  if (!txs.length) { const p = document.createElement("p"); p.className = "empty"; p.textContent = "No activity yet. Add money to get started."; ul.append(p); return; }
+  for (const t of txs) {
+    const dep = t.kind === "deposit", out = !dep && t.sender_email === me.email, other = out ? t.receiver_email : t.sender_email || me.email;
+    let h = 0; for (const ch of other) h = (h * 31 + ch.charCodeAt(0)) % 360;
+    const li = document.createElement("li"), av = document.createElement("div"), box = document.createElement("div"), a = document.createElement("div");
+    av.className = "av"; av.textContent = (dep ? "+" : other[0]).toUpperCase(); av.style.background = `hsl(${h} 60% 91%)`; av.style.color = `hsl(${h} 45% 28%)`;
+    const title = document.createElement("div"), date = document.createElement("div");
+    title.className = "t"; title.textContent = dep ? "Added money" : out ? "Sent to " + other : "Received from " + other;
+    date.className = "d"; date.textContent = when(t.created_at); box.append(title, date);
+    a.className = "amt " + (out ? "out" : "in"); a.textContent = (out ? "−" : "+") + fmt(t.amount_cents);
+    li.append(av, box, a); ul.append(li);
+  }
+}
+async function refresh() {
+  try { me = await api("me"); const txs = await api("transactions");
+    $("who").textContent = me.email; $("auth").hidden = true; $("app").hidden = false; setBal(me.balance_cents); render(txs);
+  } catch (e) { logout(); }
+}
+if (token) refresh();
+</script></body></html>
